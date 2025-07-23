@@ -66,13 +66,21 @@
 
     .tab-button {
       flex: 1 1 30%;
-      padding: 12px 16px;
+      padding: 10px 12px;
       border: 1px solid #ccc;
       background: #eee;
       cursor: pointer;
       font-weight: bold;
       text-align: center;
-      font-size: 18px;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .tab-button span.quiz-counter {
+      display: block;
+      font-size: 14px;
+      font-weight: normal;
+      color: #333;
     }
 
     .tab-button.active {
@@ -106,12 +114,12 @@
   <button id="speakBtn" title="読み上げ操作ボタン"></button>
 
   <div class="tabs" id="tabButtons">
-    <button class="tab-button active" data-index="0">Tab 1</button>
-    <button class="tab-button" data-index="1">Tab 2</button>
-    <button class="tab-button" data-index="2">Tab 3</button>
-    <button class="tab-button" data-index="3">Tab 4</button>
-    <button class="tab-button" data-index="4">Tab 5</button>
-    <button class="tab-button" data-index="5">Tab 6</button>
+    <button class="tab-button active" data-index="0">Tab 1<br><span class="quiz-counter">(0問)</span></button>
+    <button class="tab-button" data-index="1">Tab 2<br><span class="quiz-counter">(0問)</span></button>
+    <button class="tab-button" data-index="2">Tab 3<br><span class="quiz-counter">(0問)</span></button>
+    <button class="tab-button" data-index="3">Tab 4<br><span class="quiz-counter">(0問)</span></button>
+    <button class="tab-button" data-index="4">Tab 5<br><span class="quiz-counter">(0問)</span></button>
+    <button class="tab-button" data-index="5">Tab 6<br><span class="quiz-counter">(0問)</span></button>
   </div>
 
   <div id="tabContents">
@@ -143,11 +151,30 @@
     let autoAnswerTimeout = null;
     let totalQuizCount = 0;
 
+    function updateTabQuizCounts() {
+      tabContents.forEach((tab, idx) => {
+        const textarea = tab.querySelector('textarea');
+        const lines = textarea.value.trim().split(/\r?\n/);
+        let count = 0;
+        for (let line of lines) {
+          if (/^(.*?[？?])\s*(.+)$/.test(line)) {
+            count++;
+          }
+        }
+        const btn = tabButtons[idx];
+        const counter = btn.querySelector('.quiz-counter');
+        if (counter) {
+          counter.textContent = `(${count}問)`;
+        }
+      });
+    }
+
     tabContents.forEach((tab, idx) => {
       const textarea = tab.querySelector('textarea');
       textarea.value = localStorage.getItem(`tab${idx}`) || "";
       textarea.addEventListener('input', () => {
         localStorage.setItem(`tab${idx}`, textarea.value);
+        updateTabQuizCounts();
       });
     });
 
@@ -295,6 +322,7 @@
     });
 
     updateQuizCount();
+    updateTabQuizCounts(); // 初期表示でカウント更新
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
